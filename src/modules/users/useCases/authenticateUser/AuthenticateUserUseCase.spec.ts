@@ -15,7 +15,7 @@ describe("Authenticate User", () => {
         authenticateUserUseCase = new AuthenticateUserUseCase(inMemoryUsersRepository);
     })
 
-    it("Shoud be able to authenticate a user", async () => { 
+    it("Should be able to authenticate a user", async () => { 
         await createUserUseCase.execute({
             name: "User test",
             email: "usertest@gmail.com",
@@ -31,7 +31,7 @@ describe("Authenticate User", () => {
         expect(response).toHaveProperty("token");
     });
 
-    it("Shoud emit unauthorized error if email is invalid", async () => { 
+    it("Should emit unauthorized error if email is invalid", async () => { 
         await createUserUseCase.execute({
             name: "User test",
             email: "usertest@gmail.com",
@@ -46,7 +46,7 @@ describe("Authenticate User", () => {
         }).rejects.toBeInstanceOf(IncorrectEmailOrPasswordError);
     });
 
-    it("Shoud emit unauthorized error if password is invalid", async () => { 
+    it("Should emit unauthorized error if password is invalid", async () => { 
         await createUserUseCase.execute({
             name: "User test",
             email: "usertest@gmail.com",

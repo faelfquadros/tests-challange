@@ -13,7 +13,7 @@ describe("Create new User", () => {
         createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
     })
     
-    it("Shoud be able to create a new user", async () => { 
+    it("Should be able to create a new user", async () => { 
         const user = await createUserUseCase.execute({
             name: "user test",
             email: "emailteste@gmail.com",
@@ -27,7 +27,7 @@ describe("Create new User", () => {
         expect(user).toHaveProperty("password");
     });
 
-    it("Shoud return conflict if user already exists", async () => { 
+    it("Should return conflict if user already exists", async () => { 
         await createUserUseCase.execute({
             name: "user test",
             email: "emailteste@gmail.com",

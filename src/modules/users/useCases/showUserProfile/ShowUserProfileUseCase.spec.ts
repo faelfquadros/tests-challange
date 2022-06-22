@@ -16,7 +16,7 @@ describe("Show user profile", () => {
         showUserProfileUseCase = new ShowUserProfileUseCase(inMemoryUsersRepository);
     })
 
-    it("Shoud be able to get a user profile by id", async () => {
+    it("Should be able to get a user profile by id", async () => {
         const newUser: User = await createUserUseCase.execute({
             name: "user test",
             email: "emailteste@gmail.com",
@@ -32,7 +32,7 @@ describe("Show user profile", () => {
         expect(user).toHaveProperty("password");
     });
 
-    it("Shoud return error if user does not exists", async () => {
+    it("Should return error if user does not exists", async () => {
         expect(async () => {
             await showUserProfileUseCase.execute('user_id');
         }).rejects.toBeInstanceOf(ShowUserProfileError);
