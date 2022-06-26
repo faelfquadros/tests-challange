@@ -1,0 +1,29 @@
+version: "3.7"
+
+services:
+  database_pg:
+    image: postgres
+    container_name: database_pg_tests_challange
+    restart: always
+    ports: 
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=tests_challange
+    volumes:
+      - pgdata:/data/postgres
+    network_mode: "host"
+  app:
+    build: .
+    container_name: tests-challange
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/app
+    network_mode: "host"
+
+volumes:
+  pgdata:
+    driver: local
