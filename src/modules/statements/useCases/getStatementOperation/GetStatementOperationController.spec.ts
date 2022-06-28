@@ -10,7 +10,7 @@ let password = 'admin';
 const _baseApi = '/api/v1/statements/';
 const id = uuidv4();
 
-describe("Statement controller", () => {
+describe("Get statement controller", () => {
     beforeAll(async () => {
         connection = await createConnection();
         await connection.runMigrations();
@@ -27,7 +27,7 @@ describe("Statement controller", () => {
         await connection.close();
     });
 
-    it("Should be able to create a deposit statement", async () => {
+    it("Should be able to get a statement", async () => {
         const authenticateResponse = await request(app)
             .post(`/api/v1/sessions`)
             .send({
@@ -47,10 +47,16 @@ describe("Statement controller", () => {
                 Authorization: `Bearer ${token}`,
             });
 
-        expect(deposit.status).toBe(201);
+        const statement = await request(app)
+            .get(`${_baseApi}${deposit.body.id}`)
+            .set({
+                Authorization: `Bearer ${token}`,
+            });
+
+        expect(statement.status).toBe(200);
     });
 
-    it("Should be able to create a withdraw statement", async () => {
+    it("Should not be able to get unexisting statement", async () => {
         const authenticateResponse = await request(app)
             .post(`/api/v1/sessions`)
             .send({
@@ -60,53 +66,18 @@ describe("Statement controller", () => {
 
         const { token } = authenticateResponse.body;
 
-        await request(app)
-            .post(`${_baseApi}deposit`)
-            .send({
-                amount: 100, 
-                description: "first deposit"
-            })
+        const unexistingId = uuidv4();
+
+        const statement = await request(app)
+            .get(`${_baseApi}${unexistingId}`)
             .set({
                 Authorization: `Bearer ${token}`,
             });
 
-        const withdraw = await request(app)
-            .post(`${_baseApi}withdraw`)
-            .send({
-                amount: 50, 
-                description: "first deposit"
-            })
-            .set({
-                Authorization: `Bearer ${token}`,
-            });
-
-        expect(withdraw.status).toBe(201);
+        expect(statement.status).toBe(404);
     });
 
-    it("Should not be able to create a withdraw statement if balance is less than the amount", async () => {
-        const authenticateResponse = await request(app)
-            .post(`/api/v1/sessions`)
-            .send({
-                email: "admin@testschallange.com",
-                password,
-            });
-
-        const { token } = authenticateResponse.body;
-
-        const withdraw = await request(app)
-            .post(`${_baseApi}withdraw`)
-            .send({
-                amount: 500, 
-                description: "first deposit"
-            })
-            .set({
-                Authorization: `Bearer ${token}`,
-            });
-
-        expect(withdraw.status).toBe(400);
-    });
-
-    it("Should not be able to create a deposit or withdraw statement if user does not exist", async () => {
+    it("Should not be able to get statement from unexisting user", async () => {
         const authenticateResponse = await request(app)
             .post(`/api/v1/sessions`)
             .send({
@@ -118,16 +89,12 @@ describe("Statement controller", () => {
 
         await connection.query(`DELETE FROM users WHERE id=$1`, [id]);
 
-        const deposit = await request(app)
-            .post(`${_baseApi}deposit`)
-            .send({
-                amount: 100.50, 
-                description: "first deposit"
-            })
+        const statement = await request(app)
+            .get(`${_baseApi}${id}`)
             .set({
                 Authorization: `Bearer ${token}`,
             });
 
-        expect(deposit.status).toBe(404);
+        expect(statement.status).toBe(404);
     });
 })
