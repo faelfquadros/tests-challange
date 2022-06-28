@@ -1,51 +1,46 @@
-import request from 'supertest';
-import { Connection } from 'typeorm';
-import { app } from '../../../../app';
-import createConnection from '../../../../database';
+import request from "supertest";
+import { Connection } from "typeorm";
+
+import { app } from "../../../../app";
+import createConnection from "../../../../database";
 
 let connection: Connection;
-const _baseApi = '/api/v1/';
+const baseApi = "/api/v1/";
 
 describe("Create user controller", () => {
-    beforeAll(async () => {
-        connection = await createConnection();
-        await connection.runMigrations();
+  beforeAll(async () => {
+    connection = await createConnection();
+    await connection.runMigrations();
+  });
+
+  afterAll(async () => {
+    await connection.dropDatabase();
+    await connection.close();
+  });
+
+  it("Should be able to create a new user", async () => {
+    const response = await request(app).post(`${baseApi}users`).send({
+      name: "User test",
+      email: "user@test.com",
+      password: "userpassword",
     });
 
-    afterAll(async () => {
-        await connection.dropDatabase();
-        await connection.close();
+    expect(response.status).toBe(201);
+  });
+
+  it("Should be able to create an user with the same email", async () => {
+    await request(app).post(`${baseApi}users`).send({
+      name: "User test",
+      email: "user@test.com",
+      password: "userpassword",
     });
 
-    it("Should be able to create a new user", async () => {
-        const response = await request(app)
-            .post(`${_baseApi}users`)
-            .send({
-                name: "User test",
-                email: "user@test.com",
-                password: "userpassword",
-            });
-
-        expect(response.status).toBe(201);
+    const response = await request(app).post(`${baseApi}users`).send({
+      name: "User test",
+      email: "user@test.com",
+      password: "userpassword",
     });
 
-    it("Should be able to create an user with the same email", async () => {
-        await request(app)
-            .post(`${_baseApi}users`)
-            .send({
-                name: "User test",
-                email: "user@test.com",
-                password: "userpassword",
-            });
-
-        const response = await request(app)
-            .post(`${_baseApi}users`)
-            .send({
-                name: "User test",
-                email: "user@test.com",
-                password: "userpassword",
-            });
-
-        expect(response.status).toBe(400);
-    });
+    expect(response.status).toBe(400);
+  });
 });

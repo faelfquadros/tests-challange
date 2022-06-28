@@ -6,40 +6,39 @@ import { CreateUserUseCase } from "./CreateUserUseCase";
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let createUserUseCase: CreateUserUseCase;
 
-describe("Create new User", () => { 
-    
-    beforeEach(() => {
-        inMemoryUsersRepository = new InMemoryUsersRepository();
-        createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
-    })
-    
-    it("Should be able to create a new user", async () => { 
-        const user = await createUserUseCase.execute({
-            name: "user test",
-            email: "emailteste@gmail.com",
-            password: "password"
-        });
+describe("Create new User", () => {
+  beforeEach(() => {
+    inMemoryUsersRepository = new InMemoryUsersRepository();
+    createUserUseCase = new CreateUserUseCase(inMemoryUsersRepository);
+  });
 
-        expect(user).toBeInstanceOf(User);
-        expect(user).toHaveProperty("id");
-        expect(user).toHaveProperty("email");
-        expect(user).toHaveProperty("name");
-        expect(user).toHaveProperty("password");
+  it("Should be able to create a new user", async () => {
+    const user = await createUserUseCase.execute({
+      name: "user test",
+      email: "emailteste@gmail.com",
+      password: "password",
     });
 
-    it("Should return conflict if user already exists", async () => { 
-        await createUserUseCase.execute({
-            name: "user test",
-            email: "emailteste@gmail.com",
-            password: "password"
-        });
+    expect(user).toBeInstanceOf(User);
+    expect(user).toHaveProperty("id");
+    expect(user).toHaveProperty("email");
+    expect(user).toHaveProperty("name");
+    expect(user).toHaveProperty("password");
+  });
 
-        expect(async () => {
-            await createUserUseCase.execute({
-                name: "user test",
-                email: "emailteste@gmail.com",
-                password: "password"
-            });
-        }).rejects.toBeInstanceOf(CreateUserError);
+  it("Should return conflict if user already exists", async () => {
+    await createUserUseCase.execute({
+      name: "user test",
+      email: "emailteste@gmail.com",
+      password: "password",
     });
-})
+
+    expect(async () => {
+      await createUserUseCase.execute({
+        name: "user test",
+        email: "emailteste@gmail.com",
+        password: "password",
+      });
+    }).rejects.toBeInstanceOf(CreateUserError);
+  });
+});
