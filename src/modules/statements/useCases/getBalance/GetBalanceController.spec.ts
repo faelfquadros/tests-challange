@@ -8,13 +8,13 @@ import { app } from '../../../../app';
 let connection: Connection;
 let password = 'admin';
 const _baseApi = '/api/v1/statements/';
+const id = uuidv4();
 
-describe("Get ballance controlle", () => {
+describe("Get ballance controller", () => {
     beforeAll(async () => {
         connection = await createConnection();
         await connection.runMigrations();
 
-        const id = uuidv4();
         const hashedPassword = await hash(password, 8);
 
         await connection.query(`
@@ -37,10 +37,10 @@ describe("Get ballance controlle", () => {
 
         const { token } = authenticateResponse.body;
 
-        const deposit = await request(app)
+        await request(app)
             .post(`${_baseApi}deposit`)
             .send({
-                amount: 100.50, 
+                amount: 100, 
                 description: "first deposit"
             })
             .set({
@@ -55,5 +55,26 @@ describe("Get ballance controlle", () => {
 
         expect(getUserBalance.status).toBe(200);
         expect(getUserBalance.body).toHaveProperty("statement");
+    });
+
+    it("Should not be able to return balance if user does not exist", async () => {
+        const authenticateResponse = await request(app)
+            .post(`/api/v1/sessions`)
+            .send({
+                email: "admin@testschallange.com",
+                password,
+            });
+
+        const { token } = authenticateResponse.body;
+
+        await connection.query(`DELETE FROM users WHERE id=$1`, [id]);
+
+        const getUserBalance = await request(app)
+            .get(`${_baseApi}balance`)
+            .set({
+                Authorization: `Bearer ${token}`,
+            });
+
+        expect(getUserBalance.status).toBe(404);
     });
 })
