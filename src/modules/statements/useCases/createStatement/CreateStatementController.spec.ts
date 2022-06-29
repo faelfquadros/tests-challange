@@ -10,6 +10,7 @@ let connection: Connection;
 const password = "admin";
 const baseApi = "/api/v1/statements/";
 const id = uuidv4();
+let routesToken: string;
 
 describe("Statement controller", () => {
   beforeAll(async () => {
@@ -21,6 +22,15 @@ describe("Statement controller", () => {
     await connection.query(`
             insert into users (id, name, email, password, created_at, updated_at)
             values('${id}', 'admin', 'admin@testschallange.com', '${hashedPassword}', 'now()', 'now()')`);
+
+    const authenticateResponse = await request(app)
+      .post(`/api/v1/sessions`)
+      .send({
+        email: "admin@testschallange.com",
+        password,
+      });
+
+    routesToken = authenticateResponse.body.token;
   });
 
   afterAll(async () => {
@@ -29,15 +39,6 @@ describe("Statement controller", () => {
   });
 
   it("Should be able to create a deposit statement", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     const deposit = await request(app)
       .post(`${baseApi}deposit`)
       .send({
@@ -45,22 +46,13 @@ describe("Statement controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(deposit.status).toBe(201);
   });
 
   it("Should be able to create a withdraw statement", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     await request(app)
       .post(`${baseApi}deposit`)
       .send({
@@ -68,7 +60,7 @@ describe("Statement controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     const withdraw = await request(app)
@@ -78,22 +70,13 @@ describe("Statement controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(withdraw.status).toBe(201);
   });
 
   it("Should not be able to create a withdraw statement if balance is less than the amount", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     const withdraw = await request(app)
       .post(`${baseApi}withdraw`)
       .send({
@@ -101,22 +84,13 @@ describe("Statement controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(withdraw.status).toBe(400);
   });
 
   it("Should not be able to create a deposit or withdraw statement if user does not exist", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     await connection.query(`DELETE FROM users WHERE id=$1`, [id]);
 
     const deposit = await request(app)
@@ -126,7 +100,7 @@ describe("Statement controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(deposit.status).toBe(404);

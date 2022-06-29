@@ -10,6 +10,7 @@ let connection: Connection;
 const password = "admin";
 const baseApi = "/api/v1/statements/";
 const id = uuidv4();
+let routesToken: string;
 
 describe("Get ballance controller", () => {
   beforeAll(async () => {
@@ -21,6 +22,15 @@ describe("Get ballance controller", () => {
     await connection.query(`
             insert into users (id, name, email, password, created_at, updated_at)
             values('${id}', 'admin', 'admin@testschallange.com', '${hashedPassword}', 'now()', 'now()')`);
+
+    const authenticateResponse = await request(app)
+      .post(`/api/v1/sessions`)
+      .send({
+        email: "admin@testschallange.com",
+        password,
+      });
+
+    routesToken = authenticateResponse.body.token;
   });
 
   afterAll(async () => {
@@ -29,15 +39,6 @@ describe("Get ballance controller", () => {
   });
 
   it("Should be able to get balance from logged user", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     await request(app)
       .post(`${baseApi}deposit`)
       .send({
@@ -45,13 +46,13 @@ describe("Get ballance controller", () => {
         description: "first deposit",
       })
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     const getUserBalance = await request(app)
       .get(`${baseApi}balance`)
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(getUserBalance.status).toBe(200);
@@ -59,21 +60,12 @@ describe("Get ballance controller", () => {
   });
 
   it("Should not be able to return balance if user does not exist", async () => {
-    const authenticateResponse = await request(app)
-      .post(`/api/v1/sessions`)
-      .send({
-        email: "admin@testschallange.com",
-        password,
-      });
-
-    const { token } = authenticateResponse.body;
-
     await connection.query(`DELETE FROM users WHERE id=$1`, [id]);
 
     const getUserBalance = await request(app)
       .get(`${baseApi}balance`)
       .set({
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${routesToken}`,
       });
 
     expect(getUserBalance.status).toBe(404);
